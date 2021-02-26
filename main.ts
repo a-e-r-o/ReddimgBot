@@ -24,10 +24,10 @@ const imgsHistory: string[] = []
 
 function ready() {
 	console.log('\n≡≡ LewdBot is now operationnal ≡≡\n')
-	setInterval(sendImg, 3600000)
+	setInterval(()=>{sendImg(channels)}, 3600000)
 }
 
-async function sendImg(){
+async function sendImg(channels: string[]){
 	let msgContent: string
 	try {
 		msgContent = await getImgLink()
@@ -73,7 +73,7 @@ async function msgCreate(msg: Message){
 			await deleteMessageByID(msg.channelID, msg.referencedMessageID?.id)
 			setTimeout(async()=>{
 				await deleteMessage(msg)
-				await sendImg()
+				await sendImg([msg.channelID])
 			},1000) // timeout to avoid ghost message when deleted just after being sent
 		}
 		return
@@ -81,7 +81,7 @@ async function msgCreate(msg: Message){
 
 	if (msg.mentionedMembers.find(x => x?.id === botID)){
 		if (msg.content.match('horny')){
-			sendImg()
+			sendImg([msg.channelID])
 		}
 		return
 	}
