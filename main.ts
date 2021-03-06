@@ -84,7 +84,7 @@ async function msgCreate(msg: Message){
 		return
 	
 	if (msg.referencedMessageID?.author.id === botID){
-		if (msg.content.match('loli')){
+		if (msg.content.match(config.replaceWord)){
 			await deleteMessageByID(msg.channelID, msg.referencedMessageID?.id)
 			setTimeout(async()=>{
 				await deleteMessage(msg)
@@ -95,7 +95,7 @@ async function msgCreate(msg: Message){
 	}
 
 	if (msg.mentionedMembers.find(x => x?.id === botID)){
-		if (msg.content.match('horny')){
+		if (msg.content.match(config.triggerWord)){
 			sendMessage(msg.channelID, getContent(msg.channelID))
 		}
 		return
