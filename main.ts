@@ -1,12 +1,10 @@
-// deps
-import {botID, startBot, Intents, sendMessage, Message, deleteMessage, deleteMessageByID} from 'https://deno.land/x/discordeno@10.3.0/mod.ts'
-import {parse} from 'https://deno.land/std@0.85.0/encoding/yaml.ts'
-// types
-import {RedditRes, Config} from './types.ts'
+import {botID, startBot, Intents, sendMessage, Message, deleteMessage, deleteMessageByID, YAML} from './deps.ts'
+import {RedditRes, Config, RedditPost} from './types.ts'
+import {readFullHist, writeHist} from './io.ts'
 
-const config = parse(Deno.readTextFileSync(Deno.realPathSync('./config.yml'))) as Config
-let token: string = config.token
-let channels: string[] = config.channels
+const config = YAML.parse(Deno.readTextFileSync(Deno.realPathSync('./config.yml'))) as Config
+const token: string = config.token
+const channels: string[] = config.channels
 
 if(!token || ! channels)
 	throw '/!\\ Incorrect config.yml'
@@ -20,48 +18,65 @@ startBot({
 	}
 })
 
-const imgsHistory: string[] = []
+const fullHist: Map<string, string[]> = readFullHist()
+let posts: RedditPost[] = []
 
-function ready() {
-	console.log('\n≡≡ LewdBot is now operationnal ≡≡\n')
-	setInterval(()=>{sendImg(channels)}, 3600000)
-}
+async function ready() {
+	console.log('\n/≡≡≡/ Ecchibot is now operationnal \\≡≡≡\\')
 
-async function sendImg(channels: string[]){
-	let msgContent: string
 	try {
-		msgContent = await getImgLink()
+		posts = await fetchPosts()
 	} catch(e) {
-		if (typeof(e) === 'string'){
-			msgContent = `\`\`\`fix\n${e}\`\`\``
-		} else {
-			msgContent = `\`\`\`diff\n- Error : ${e.toString()}\`\`\``
-		}
+		handleError(e as Error)
 	}
-	for (const channelId of channels){
-		await sendMessage(channelId, msgContent)
-	}
+
+	broadcastContent()
+	setInterval(()=>{broadcastContent()}, config.interval * 60000)
 }
 
-async function getImgLink(): Promise<string> {
-	const res = await fetch ('https://api.reddit.com/r/ecchi/top.json?sort=hot&limit=30') 
+async function fetchPosts(): Promise<RedditPost[]> {
+	const res = await fetch (`https://api.reddit.com/r/${config.subreddit}/top.json?sort=hot&limit=${config.fetchAmount}`)
 	const resContent = (await res.json()) as RedditRes
+	const posts = resContent.data.children as RedditPost[]
+	return posts
+}
 
-	let imgLink: string | undefined
-	for (const pst of resContent.data.children) {
-		if (!imgsHistory.includes(pst.data.url)){
-			imgLink = pst.data.url
-			imgsHistory.push(imgLink)
-			break
+function getContent(channelID: string): string {
+	let selectedPost: RedditPost | undefined
+
+	let currentHist: string[] | undefined = fullHist.get(channelID)
+
+	if (!currentHist) {
+		if (posts[0]) {
+			selectedPost = posts[0]
+			fullHist.set(channelID, [posts[0].data.id])
+			currentHist = [posts[0].data.id]
+		}
+	} else {
+		for (const post of posts) {
+			if (!currentHist?.includes(post.data.id)){
+				selectedPost = post
+				currentHist.push(post.data.id)
+				break
+			}
 		}
 	}
-	if (imgsHistory.length > 40)
-		imgsHistory.shift()
 
-	if (imgLink == undefined)
-		throw 'Cannot find any new images'
+	if (selectedPost && currentHist) {
+		if (currentHist.length > 100)
+			currentHist.shift()
+		writeHist(channelID, currentHist)
+	} else {
+		return '\`\`\`fix\nCannot find any new images\`\`\`'
+	}
 
-	return imgLink
+	return selectedPost.data.url
+}
+
+function broadcastContent(){
+	for (const channelID of channels){
+		sendMessage(channelID, getContent(channelID))
+	}
 }
 
 async function msgCreate(msg: Message){
@@ -73,7 +88,7 @@ async function msgCreate(msg: Message){
 			await deleteMessageByID(msg.channelID, msg.referencedMessageID?.id)
 			setTimeout(async()=>{
 				await deleteMessage(msg)
-				await sendImg([msg.channelID])
+				sendMessage(msg.channelID, getContent(msg.channelID))
 			},1000) // timeout to avoid ghost message when deleted just after being sent
 		}
 		return
@@ -81,8 +96,17 @@ async function msgCreate(msg: Message){
 
 	if (msg.mentionedMembers.find(x => x?.id === botID)){
 		if (msg.content.match('horny')){
-			sendImg([msg.channelID])
+			sendMessage(msg.channelID, getContent(msg.channelID))
 		}
 		return
+	}
+}
+
+function handleError(e: Error) {
+	console.log('== Error ==', new Date())
+	console.log(e.message)
+
+	for (const channel of channels){
+		sendMessage(channel, '\`\`\`fix\nAn error occured while fetching data from Reddit\`\`\`')
 	}
 }
