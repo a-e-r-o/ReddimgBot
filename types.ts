@@ -20,11 +20,24 @@ export type RedditPost = {
 export type Config = {
 	token: string
 	subreddit: string
-	replaceWord: string
-	triggerWord: string
 	interval: number
 	fetchAmount: number
+	replaceWord: string
+	triggerWord: string
+	histSize: number
 	channels: string[]
+}
+export function checkConfig(value: Config): boolean{
+	return (
+		typeof value.token == 'string' &&
+		typeof value.subreddit == 'string' &&
+		typeof value.interval == 'number' &&
+		typeof value.fetchAmount == 'number' &&
+		typeof value.replaceWord == 'string' &&
+		typeof value.triggerWord == 'string' &&
+		typeof value.histSize == 'number' &&
+		typeof value.channels == 'object'
+	)
 }
 
 export type Hist = {

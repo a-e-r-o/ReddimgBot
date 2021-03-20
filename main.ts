@@ -1,13 +1,13 @@
 import {botID, startBot, Intents, sendMessage, Message, deleteMessage, deleteMessageByID, YAML} from './deps.ts'
-import {RedditRes, Config, RedditPost} from './types.ts'
+import {RedditRes, Config, RedditPost, checkConfig} from './types.ts'
 import {readFullHist, writeHist} from './io.ts'
 
 const config = YAML.parse(Deno.readTextFileSync(Deno.realPathSync('./config.yml'))) as Config
 const token: string = config.token
 const channels: string[] = config.channels
 
-if(!token || ! channels)
-	throw '/!\\ Incorrect config.yml'
+if(!checkConfig(config))
+	throw '/!\\ config.yml incorrect or missing'
 
 startBot({
 	token: token,
@@ -22,7 +22,7 @@ const fullHist: Map<string, string[]> = readFullHist()
 let posts: RedditPost[] = []
 
 async function ready() {
-	console.log('\n/≡≡≡/ Ecchibot is now operationnal \\≡≡≡\\')
+	console.log('\n/≡≡≡/ Bot operationnal \\≡≡≡\\')
 
 	try {
 		posts = await fetchPosts()
@@ -63,8 +63,9 @@ function getContent(channelID: string): string {
 	}
 
 	if (selectedPost && currentHist) {
-		if (currentHist.length > 100)
+		while (currentHist.length > config.histSize){
 			currentHist.shift()
+		}
 		writeHist(channelID, currentHist)
 	} else {
 		return '\`\`\`fix\nCannot find any new images\`\`\`'
