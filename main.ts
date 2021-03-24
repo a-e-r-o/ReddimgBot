@@ -43,33 +43,24 @@ async function fetchPosts(): Promise<RedditPost[]> {
 
 function getContent(channelID: string): string {
 	let selectedPost: RedditPost | undefined
-
-	let currentHist: string[] | undefined = fullHist.get(channelID)
-
-	if (!currentHist) {
-		if (posts[0]) {
-			selectedPost = posts[0]
-			fullHist.set(channelID, [posts[0].data.id])
-			currentHist = [posts[0].data.id]
-		}
-	} else {
-		for (const post of posts) {
-			if (!currentHist?.includes(post.data.id)){
-				selectedPost = post
-				currentHist.push(post.data.id)
-				break
-			}
+	const currentHist: string[] = fullHist.get(channelID) ?? []
+	
+	for (const post of posts) {
+		if (!currentHist.includes(post.data.id)){
+			selectedPost = post
+			currentHist.push(post.data.id)
+			break
 		}
 	}
 
-	if (selectedPost && currentHist) {
-		while (currentHist.length > config.histSize){
-			currentHist.shift()
-		}
-		writeHist(channelID, currentHist)
-	} else {
+	while (currentHist.length > config.histSize){
+		currentHist.shift()
+	}
+	fullHist.set(channelID, currentHist)
+	writeHist(channelID, currentHist)
+
+	if (!selectedPost)
 		return '\`\`\`fix\nCannot find any new images\`\`\`'
-	}
 
 	return selectedPost.data.url
 }
