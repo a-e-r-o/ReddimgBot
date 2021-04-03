@@ -21,17 +21,14 @@ startBot({
 const fullHist: Map<string, string[]> = readFullHist()
 let posts: RedditPost[] = []
 
-async function ready() {
+function ready() {
 	console.log('\n/≡≡≡/ Bot operationnal \\≡≡≡\\')
-
-	try {
-		posts = await fetchPosts()
-	} catch(e) {
-		handleError(e as Error)
-	}
-
+	
 	broadcastContent()
-	setInterval(()=>{broadcastContent()}, config.interval * 60000)
+
+	setInterval(()=>{
+		broadcastContent()
+	}, config.interval * 60000)
 }
 
 async function fetchPosts(): Promise<RedditPost[]> {
@@ -65,7 +62,13 @@ function getContent(channelID: string): string {
 	return selectedPost.data.url
 }
 
-function broadcastContent(){
+async function broadcastContent(){
+	try {
+		posts = await fetchPosts()
+	} catch(e) {
+		handleError(e as Error)
+	}
+
 	for (const channelID of channels){
 		sendMessage(channelID, getContent(channelID))
 	}
