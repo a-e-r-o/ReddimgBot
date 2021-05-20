@@ -1,7 +1,8 @@
-# ecchibot
+# N.E.O.N. Bot
 
-*Not much it is, but honest work, it is*<br>
-*Hmmm look at anime girls, I must*
+*A bot to get all the good content from Reddit, without having to go on Reddit*<br>
+
+### Instructions
 
 Create a `config.yml` at the root of the project :
 
