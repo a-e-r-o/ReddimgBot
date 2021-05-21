@@ -1,5 +1,5 @@
 import {Hist} from './types.ts'
-import {existsSync} from './deps.ts';
+import {existsSync} from './deps.ts'
 
 const histDir = './hist'
 

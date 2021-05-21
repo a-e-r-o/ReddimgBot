@@ -19,18 +19,22 @@ export type RedditPost = {
 
 export type Config = {
 	token: string
-	interval: number
-	fetchAmount: number
+	sendInterval: number
+	fetchInterval: number
+	fetchSize: number
 	histSize: number
-	topics: topicConfig[]
+	topics: TopicConfig[]
+	deleteReactCharCodes: number[]
 }
 
 export function checkConfig(value: Config): boolean {
 	return (
 		typeof value.token == 'string' &&
-		typeof value.interval == 'number' &&
-		typeof value.fetchAmount == 'number' &&
+		typeof value.sendInterval == 'number' &&
+		typeof value.fetchInterval == 'number' &&
+		typeof value.fetchSize == 'number' &&
 		typeof value.histSize == 'number' &&
+		value.deleteReactCharCodes.length > 0 &&
 		value.topics != undefined
 	)
 }
@@ -40,14 +44,16 @@ export type Hist = {
 	posts: string[]
 }
 
-export type topicConfig = {
+export type TopicConfig = {
 	subreddit: string
-	channels: channelConfig[]
+	fetchSize?: number
+	fetchInterval?: number
+	channels: ChannelConfig[]
 }
 
-export type channelConfig = {
+export type ChannelConfig = {
 	id: string
-	interval?: number
-	fetchAmount?: number
+	sendInterval?: number
 	histSize?: number
+	deleteReactCharCodes?: number[]
 }

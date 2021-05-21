@@ -1,99 +1,153 @@
-import {startBot, Intents, sendMessage, Message, deleteMessage, deleteMessageByID, YAML} from './src/deps.ts'
-import {Config, checkConfig, topicConfig, channelConfig} from './src/types.ts'
+import {startBot, Intents, sendMessage, Message, deleteMessage, deleteMessageByID, YAML, botID, MessageReactionUncachedPayload, ReactionPayload} from './src/deps.ts'
+import {Config, checkConfig, TopicConfig, ChannelConfig} from './src/types.ts'
 import {PostsManager} from './src/postsManager.ts'
 
 const config: Config = YAML.parse(Deno.readTextFileSync(Deno.realPathSync('./config.yml'))) as Config
 const token: string = config.token
-const topics: topicConfig[] = config.topics
+const topics: TopicConfig[] = config.topics
 
 if(!checkConfig(config))
 	throw '/!\\ config.yml incorrect or missing'
 
 startBot({
 	token: token,
-	intents: [Intents.GUILDS, Intents.GUILD_MESSAGES, Intents.DIRECT_MESSAGES],
+	intents: [Intents.GUILDS, Intents.GUILD_MESSAGES, Intents.DIRECT_MESSAGES, Intents.GUILD_MESSAGE_REACTIONS],
 	eventHandlers: {
 		ready: ready,
-		//messageCreate: msgCreate
+		messageCreate: msgCreate,
+		reactionAdd: reactionAdd
 	}
 })
 
-const intervals = {message: new Map<string, number>(), cache: new Map<string, number>()}
+const intervals = {
+	message: new Map<string, number>(),
+	cache: new Map<string, number>()
+}
 const manager: PostsManager = new PostsManager()
 
 // Ready
 function ready() {
-	console.log('\n=== Bot operationnal ===')
+	console.log('\n=== Bot operationnal ===\n')
 	init()
 }
 
 function init(){
 	// For each topic
-	topics.forEach(topic => {
+	topics.forEach(async topic => {
+
+		// Cache interval
+		intervals.cache.set(
+			topic.subreddit,			
+			setInterval(()=>{
+				manager.updateCache(
+					topic,
+					topic.fetchSize ?? config.fetchSize,
+					topic.fetchInterval ?? config.fetchInterval
+				)
+			}, (topic.fetchInterval ?? config.fetchInterval)*60000)
+		)
+
+		// First cache update
+		await manager.updateCache(
+			topic,
+			topic.fetchSize ?? config.fetchSize,
+			topic.fetchInterval ?? config.fetchInterval
+		)
 		
 		// For each channel in each topic
-		topic.channels.forEach(async channel => {
+		topic.channels.forEach(channel => {
 			
 			// Send interval
 			intervals.message.set	(
 				channel.id,
 				setInterval(()=>{
-					const content = manager.getContent(channel.id, topic.subreddit, config.histSize)
+					const content = manager.getContent(
+						channel.id,
+						topic.subreddit,
+						channel.histSize ?? config.histSize
+					)
 					sendMessage(channel.id, content)
-				}, (channel.interval ?? config.interval)*60000)
+				}, (channel.sendInterval ?? config.sendInterval)*60000)
 			)
 
-			// Cache interval
-			intervals.cache.set(
-				channel.id,			
-				setInterval(()=>{
-					try {
-						manager.updateCache(topic.subreddit, config.fetchAmount)
-					} catch(e) {
-						handleError(e as Error)
-					}
-				}, (channel.interval ?? config.interval)*60000)
+			// First content send
+			const content = manager.getContent(
+				channel.id,
+				topic.subreddit,
+				channel.histSize ?? config.histSize
 			)
-			
-			// First round
-			await manager.updateCache(topic.subreddit, config.fetchAmount)
-			const content = manager.getContent(channel.id, topic.subreddit, config.histSize)
 			sendMessage(channel.id, content)
-		});
+		})
 	})
 } 
 
-// Error
-function handleError(e: Error) {
-	console.log('== Error ==', new Date())
-	console.log(e.message)
+// On message sent on a guild text channel
+function msgCreate(msg: Message){
 
-	/*
-	for (const channel of channels){
-		sendMessage(channel.id, '\`\`\`fix\nAn error occured while fetching data from Reddit\`\`\`')
+	// If the bot is not mentionned, return
+	if (!msg.mentionedMembers.find(x => x?.id == botID))
+		return
+
+	// If the channel Id isn't anywhere in the config, return
+	const topic = topics.find(x => x.channels.find(y => y.id == msg.channelID))
+	if (!topic)
+		return
+	const channel = topic.channels.find(y => y.id == msg.channelID)!
+
+	// Message content (after removing mentions) contains a number
+	let count = 1
+	const arg = parseInt(msg.content.replace(/<.+>/mg, ''))
+	if (!isNaN(arg)) {
+		if (arg > 0)
+			count = arg
+		
+		if (arg > 10)
+			count = 10
 	}
-	*/
+
+	for (let i = 0; i < count; i++) {
+		const content = manager.getContent(
+			msg.channelID,
+			topic.subreddit,
+			channel.histSize ?? config.histSize
+		)
+		sendMessage(channel.id, content)
+	}
+}
+
+function reactionAdd(
+	payload: MessageReactionUncachedPayload,
+	emoji: ReactionPayload,
+	userID: string,
+	message?: Message | undefined)
+{
+	if (message?.author.id != botID)
+		return
+
+	// Get channel and topic
+	const topic = topics.find(x => x.channels.find(y => y.id == message.channelID))
+	if (!topic)
+		return
+	const channel = topic.channels.find(y => y.id == message.channelID)!
+		
+	// Test if correct emoji
+	const charCode = emoji.name?.charCodeAt(0) || 0
+	const ref = channel.deleteReactCharCodes ?? config.deleteReactCharCodes
+	if (!ref.includes(charCode))
+		return
+	
+	// timeout to avoid "ghost message" when deleted to quickly after being sent
+	setTimeout(()=>{
+		deleteMessage(message)
+	}, 500)
 }
 
 /*
-// Messages
-async function msgCreate(msg: Message){
-	if (!channels.includes(msg.channelID))
-		return
-	
-	if (msg.referencedMessageID?.author.id === botID){
-		if (msg.content.match(config.replaceWord)){
-			await deleteMessageByID(msg.channelID, msg.referencedMessageID?.id)
-			setTimeout(async()=>{
-				await deleteMessage(msg)
-				sendMessage(msg.channelID, getContent(msg.channelID))
-			},1000) // timeout to avoid ghost message when deleted just after being sent
-		}
-		return
+if (msg.referencedMessageID?.author.id === botID){
+	if (msg.content.match(config.replaceWord)){
+		await deleteMessageByID(msg.channelID, msg.referencedMessageID?.id)
+		
 	}
-
-	if (msg.mentionedMembers.find(x => x?.id === botID)){
-		sendMessage(msg.channelID, getContent(msg.channelID, fullHist.get(msg.channelID))
-		return
-	}
-}*/
+	return
+}
+*/
