@@ -1,10 +1,10 @@
-import {botID, startBot, Intents, sendMessage, Message, deleteMessage, deleteMessageByID, YAML} from './deps.ts'
-import {RedditRes, Config, RedditPost, checkConfig} from './types.ts'
-import {readFullHist, writeHist} from './io.ts'
+import {startBot, Intents, sendMessage, Message, deleteMessage, deleteMessageByID, YAML} from './src/deps.ts'
+import {Config, checkConfig, topicConfig, channelConfig} from './src/types.ts'
+import {PostsManager} from './src/postsManager.ts'
 
-const config = YAML.parse(Deno.readTextFileSync(Deno.realPathSync('./config.yml'))) as Config
+const config: Config = YAML.parse(Deno.readTextFileSync(Deno.realPathSync('./config.yml'))) as Config
 const token: string = config.token
-const channels: string[] = config.channels
+const topics: topicConfig[] = config.topics
 
 if(!checkConfig(config))
 	throw '/!\\ config.yml incorrect or missing'
@@ -14,66 +14,69 @@ startBot({
 	intents: [Intents.GUILDS, Intents.GUILD_MESSAGES, Intents.DIRECT_MESSAGES],
 	eventHandlers: {
 		ready: ready,
-		messageCreate: msgCreate
+		//messageCreate: msgCreate
 	}
 })
 
-const fullHist: Map<string, string[]> = readFullHist()
-let posts: RedditPost[] = []
+const intervals = {message: new Map<string, number>(), cache: new Map<string, number>()}
+const manager: PostsManager = new PostsManager()
 
+// Ready
 function ready() {
-	console.log('\n/≡≡≡/ Bot operationnal \\≡≡≡\\')
-	
-	broadcastContent()
-
-	setInterval(()=>{
-		broadcastContent()
-	}, config.interval * 60000)
+	console.log('\n// Bot operationnal \\')
+	init()
 }
 
-async function fetchPosts(): Promise<RedditPost[]> {
-	const res = await fetch (`https://api.reddit.com/r/${config.subreddit}/top.json?sort=hot&limit=${config.fetchAmount}`)
-	const resContent = (await res.json()) as RedditRes
-	const posts = resContent.data.children as RedditPost[]
-	return posts
+function init(){
+	// For each topic
+	topics.forEach(topic => {
+		
+		// For each channel in each topic
+		topic.channels.forEach(async channel => {
+			
+			// Send interval
+			intervals.message.set	(
+				channel.id,
+				setInterval(()=>{
+					const content = manager.getContent(channel.id, topic.subreddit, config.histSize)
+					sendMessage(channel.id, content)
+				}, (channel.interval ?? config.interval)*60000)
+			)
+
+			// Cache interval
+			intervals.cache.set(
+				channel.id,			
+				setInterval(()=>{
+					try {
+						manager.updateCache(topic.subreddit, config.fetchAmount)
+					} catch(e) {
+						handleError(e as Error)
+					}
+				}, (channel.interval ?? config.interval)*60000)
+			)
+			
+			// First round
+			await manager.updateCache(topic.subreddit, config.fetchAmount)
+			const content = manager.getContent(channel.id, topic.subreddit, config.histSize)
+			sendMessage(channel.id, content)
+		});
+	})
+} 
+
+// Error
+function handleError(e: Error) {
+	console.log('== Error ==', new Date())
+	console.log(e.message)
+
+	/*
+	for (const channel of channels){
+		sendMessage(channel.id, '\`\`\`fix\nAn error occured while fetching data from Reddit\`\`\`')
+	}
+	*/
 }
 
-function getContent(channelID: string): string {
-	let selectedPost: RedditPost | undefined
-	const currentHist: string[] = fullHist.get(channelID) ?? []
-	
-	for (const post of posts) {
-		if (!currentHist.includes(post.data.id)){
-			selectedPost = post
-			currentHist.push(post.data.id)
-			break
-		}
-	}
-
-	while (currentHist.length > config.histSize){
-		currentHist.shift()
-	}
-	fullHist.set(channelID, currentHist)
-	writeHist(channelID, currentHist)
-
-	if (!selectedPost)
-		return '\`\`\`fix\nCannot find any new images\`\`\`'
-
-	return selectedPost.data.url
-}
-
-async function broadcastContent(){
-	try {
-		posts = await fetchPosts()
-	} catch(e) {
-		handleError(e as Error)
-	}
-
-	for (const channelID of channels){
-		sendMessage(channelID, getContent(channelID))
-	}
-}
-
+/*
+// Messages
 async function msgCreate(msg: Message){
 	if (!channels.includes(msg.channelID))
 		return
@@ -90,18 +93,7 @@ async function msgCreate(msg: Message){
 	}
 
 	if (msg.mentionedMembers.find(x => x?.id === botID)){
-		if (msg.content.match(config.triggerWord)){
-			sendMessage(msg.channelID, getContent(msg.channelID))
-		}
+		sendMessage(msg.channelID, getContent(msg.channelID, fullHist.get(msg.channelID))
 		return
 	}
-}
-
-function handleError(e: Error) {
-	console.log('== Error ==', new Date())
-	console.log(e.message)
-
-	for (const channel of channels){
-		sendMessage(channel, '\`\`\`fix\nAn error occured while fetching data from Reddit\`\`\`')
-	}
-}
+}*/

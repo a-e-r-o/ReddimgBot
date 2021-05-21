@@ -19,28 +19,35 @@ export type RedditPost = {
 
 export type Config = {
 	token: string
-	subreddit: string
 	interval: number
 	fetchAmount: number
-	replaceWord: string
-	triggerWord: string
 	histSize: number
-	channels: string[]
+	topics: topicConfig[]
 }
-export function checkConfig(value: Config): boolean{
+
+export function checkConfig(value: Config): boolean {
 	return (
 		typeof value.token == 'string' &&
-		typeof value.subreddit == 'string' &&
 		typeof value.interval == 'number' &&
 		typeof value.fetchAmount == 'number' &&
-		typeof value.replaceWord == 'string' &&
-		typeof value.triggerWord == 'string' &&
 		typeof value.histSize == 'number' &&
-		typeof value.channels == 'object'
+		value.topics != undefined
 	)
 }
 
 export type Hist = {
 	id: string
 	posts: string[]
+}
+
+export type topicConfig = {
+	subreddit: string
+	channels: channelConfig[]
+}
+
+export type channelConfig = {
+	id: string
+	interval?: number
+	fetchAmount?: number
+	histSize?: number
 }

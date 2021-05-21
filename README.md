@@ -8,14 +8,16 @@ Create a `config.yml` at the root of the project :
 
 ```yaml
 token: 'bot secret token'
-subreddit: 'ecchi' # Indicate the subreddit on which the bot will go to get the images.
-interval: 30  # Interval (in minutes) between each post
-fetchAmount: 50  # Number of reddit posts fetched each time - the more frequently you post the more you should fetch
-replaceWord: 'bad' # Word to indicate that an image should be replaced. Reply to a message from the bot with this word and it will delete the image and post a new one.
-triggerWord: 'horny' # Word used to trigger manually the bot to post a new image. Mention the bot with this word in your message.
-histSize: 100 # Number of posts IDs that will be kept in memory (and in a json file) to avoid duplicate posts
-channels: # List of channel IDs the bot will send the images to
-- 000000000000000000
+interval: 30  # Default interval (in minutes) between each post
+fetchAmount: 50  # Default number of reddit posts fetched each time
+histSize: 100 # Default Number of posts IDs that will be kept in memory (and in a json file) to avoid duplicate posts
+channels: # List of channels the bot will send the images to
+- id: '000000000000000000' # Channel ID
+	subreddit: 'dankmemes' # The subreddit on which the bot will go to get the images for this channel
+	# Optionnal values that override the ones listed above for this particular channel
+	interval: 5
+  fetchAmount: 50
+  histSize: 20
 ``` 
 *these values are merely the default ones, you may configure them the way you like*
 
