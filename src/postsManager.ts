@@ -1,40 +1,40 @@
 import {RedditPost, RedditRes, Hist} from './types.ts'
-import {writeHist} from './hist.ts'
+import {writeHist, readFullHist} from './hist.ts'
 
 export class PostsManager {
 
 	// Record = all channel histories
-	public record: Map<string, Hist>
+	public record: Map<string, string[]>
 	// Cache = reddit posts already fecthed, mapped by subreddit
 	public cache: Map<string, RedditPost[]>
 
-	constructor(record = new Map<string, Hist>(), cache = new Map<string, RedditPost[]>()){
-		this.record = record
-		this.cache = cache
+	constructor(record = new Map<string, Hist>()){
+		this.record = readFullHist()
+		this.cache = new Map<string, RedditPost[]>()
 	}
 
 
 	public getContent(channelID: string, subreddit: string, histSize:number): string {
 		let selectedPost: RedditPost | undefined
-		const hist = this.record.get(channelID) || {id: channelID, posts: []}
+		const hist = this.record.get(channelID) || []
 		
 		// Get a post that is not already in history
 		for (const post of this.cache.get(subreddit)!) {
-			if (!hist.posts.includes(post.data.id)){
+			if (!hist.includes(post.data.id)){
 				selectedPost = post
-				hist.posts.push(post.data.id)
+				hist.push(post.data.id)
 				break
 			}
 		}
 	
 		// Delete posts in history beyond max history size
-		while (hist.posts.length > histSize){
-			hist.posts.shift()
+		while (hist.length > histSize){
+			hist.shift()
 		}
 	
 		// Update record
 		this.record.set(channelID, hist)
-		writeHist(hist)
+		writeHist(channelID, hist)
 	
 		if (!selectedPost)
 			return '\`\`\`fix\nCannot find any new images\`\`\`'

@@ -10,12 +10,12 @@ export function readFullHist(): Map<string, string[]> {
 	return new Map(objHists.map(i => [i.id, i.posts]))
 }
 
-export function writeHist(hist: Hist) {
+export function writeHist(id: string, posts: string[]) {
 	const histObj: Hist = {
-		id: hist.id,
-		posts: hist.posts
+		id: id,
+		posts: posts
 	}
-	Deno.writeTextFileSync(Deno.realPathSync(histDir)+'/'+hist.id, JSON.stringify(histObj))
+	Deno.writeTextFileSync(Deno.realPathSync(histDir)+'/'+id, JSON.stringify(histObj))
 }
 
 function readPath(path: string): Record<string, unknown>[] {

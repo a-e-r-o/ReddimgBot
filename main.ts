@@ -23,7 +23,7 @@ const manager: PostsManager = new PostsManager()
 
 // Ready
 function ready() {
-	console.log('\n// Bot operationnal \\')
+	console.log('\n=== Bot operationnal ===')
 	init()
 }
 
