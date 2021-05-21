@@ -14,6 +14,8 @@ export type RedditPost = {
 		url: string
 		permalink: string
 		id: string
+		is_gallery: boolean
+		media_metadata: Record<string, {m: string, id: string}>
 	}
 }
 

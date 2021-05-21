@@ -40,7 +40,7 @@ export class PostsManager {
 		if (!selectedPost)
 			return '\`\`\`fix\nCannot find any new images\`\`\`'
 	
-		return selectedPost.data.url
+		return selectedPost.data.is_gallery ? this.formatGalleryMsg(selectedPost) : selectedPost.data.url
 	}
 
 	public async updateCache(topic: TopicConfig, fetchAmount: number, fetchInterval: number): Promise<void> {
@@ -57,6 +57,19 @@ export class PostsManager {
 			for (const channel of topic.channels){
 				sendMessage(channel.id, `\`\`\`fix\nAn error occured while fetching content from Reddit for Subreddit : "${topic.subreddit}". Retrying in ${fetchInterval} minutes\`\`\``)
 			}
+		}
+	}
+
+	private formatGalleryMsg(post: RedditPost): string {
+		try {
+			const firstImgMeta = Object.entries(post.data.media_metadata)[0][1]
+			const mediaType = firstImgMeta.m.replace(/.+\//gm, '')
+			const count = Object.entries(post.data.media_metadata).length
+			const link = 'https://i.redd.it/'+firstImgMeta.id+'.'+mediaType
+			
+			return `*(${count} images) : ||${post.data.url}||*\n${link}`
+		} catch {
+			return 'Could not retrive data from gallery : '+post.data.url
 		}
 	}
 }
