@@ -69,14 +69,6 @@ function init(){
 					sendMessage(channel.id, content)
 				}, (channel.sendInterval ?? config.sendInterval)*60000)
 			)
-
-			// First content send
-			const content = manager.getContent(
-				channel.id,
-				topic.subreddit,
-				channel.histSize ?? config.histSize
-			)
-			sendMessage(channel.id, content)
 		})
 	})
 } 
