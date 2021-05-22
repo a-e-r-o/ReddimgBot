@@ -76,8 +76,8 @@ function init(){
 // On message sent on a guild text channel
 function msgCreate(msg: Message){
 
-	// If the bot is not mentionned, return
-	if (!msg.mentionedMembers.find(x => x?.id == botID))
+	// If the bot is not mentionned, or if it's simply a reply, return
+	if (!msg.mentionedMembers.find(x => x?.id == botID) || msg.referencedMessageID)
 		return
 
 	// If the channel Id isn't anywhere in the config, return
