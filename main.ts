@@ -88,7 +88,8 @@ function msgCreate(msg: Message){
 
 	// Message content (after removing mentions) contains a number
 	let count = 1
-	const arg = parseInt(msg.content.replace(/<.+>/mg, ''))
+	const clearedMsg = msg.content.replace(/<.+>/mg, '').trim()
+	const arg = parseInt(clearedMsg)
 	if (!isNaN(arg)) {
 		if (arg > 0)
 			count = arg
@@ -96,6 +97,9 @@ function msgCreate(msg: Message){
 		if (arg > 10)
 			count = 10
 	}
+
+	if (clearedMsg != '' && isNaN(arg))
+		return
 
 	for (let i = 0; i < count; i++) {
 		const content = manager.getContent(
@@ -123,9 +127,10 @@ function reactionAdd(
 	const channel = topic.channels.find(y => y.id == message.channelID)!
 		
 	// Test if correct emoji
-	const charCode = emoji.name?.charCodeAt(0) || 0
-	const ref = channel.deleteReactCharCodes ?? config.deleteReactCharCodes
-	if (!ref.includes(charCode))
+	const charPoint = emoji.name?.codePointAt(0) || 0
+	const ref = channel.deleteReactCharCodes || config.deleteReactCharCodes
+	Deno.writeTextFileSync('test.json', (emoji.name?.codePointAt(0)?.toString() || ''));
+	if (!ref.includes(charPoint))
 		return
 	
 	// timeout to avoid "ghost message" when deleted to quickly after being sent
