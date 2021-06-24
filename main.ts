@@ -1,4 +1,4 @@
-import {startBot, Intents, sendMessage, Message, deleteMessage, deleteMessageByID, YAML, botID, MessageReactionUncachedPayload, ReactionPayload} from './src/deps.ts'
+import {startBot, Intents, sendMessage, DiscordenoMessage, deleteMessage, YAML, botId, MessageReactionAdd} from './src/deps.ts'
 import {Config, checkConfig, TopicConfig, ChannelConfig} from './src/types.ts'
 import {PostsManager} from './src/postsManager.ts'
 
@@ -11,7 +11,7 @@ if(!checkConfig(config))
 
 startBot({
 	token: token,
-	intents: [Intents.GUILDS, Intents.GUILD_MESSAGES, Intents.DIRECT_MESSAGES, Intents.GUILD_MESSAGE_REACTIONS],
+	intents: [Intents.Guilds, Intents.GuildMessages, Intents.GuildMessageReactions],
 	eventHandlers: {
 		ready: ready,
 		messageCreate: msgCreate,
@@ -66,7 +66,7 @@ function init(){
 						topic.subreddit,
 						channel.histSize ?? config.histSize
 					)
-					sendMessage(channel.id, content)
+					sendMessage(BigInt(channel.id), content)
 				}, (channel.sendInterval ?? config.sendInterval)*60000)
 			)
 		})
@@ -74,17 +74,17 @@ function init(){
 } 
 
 // On message sent on a guild text channel
-function msgCreate(msg: Message){
+function msgCreate(msg: DiscordenoMessage){
 
 	// If the bot is not mentionned, or if it's simply a reply, return
-	if (!msg.mentionedMembers.find(x => x?.id == botID) || msg.referencedMessageID)
+	if (!msg.mentionedMembers.find(x => x?.id == botId) || msg.referencedMessage?.id)
 		return
 
 	// If the channel Id isn't anywhere in the config, return
-	const topic = topics.find(x => x.channels.find(y => y.id == msg.channelID))
+	const topic = topics.find(x => x.channels.find(y => y.id == msg.channelId.toString()))
 	if (!topic)
 		return
-	const channel = topic.channels.find(y => y.id == msg.channelID)!
+	const channel = topic.channels.find(y => y.id == msg.channelId.toString())!
 
 	// Message content (after removing mentions) contains a number
 	let count = 1
@@ -103,48 +103,40 @@ function msgCreate(msg: Message){
 
 	for (let i = 0; i < count; i++) {
 		const content = manager.getContent(
-			msg.channelID,
+			msg.channelId.toString(),
 			topic.subreddit,
 			channel.histSize ?? config.histSize
 		)
-		sendMessage(channel.id, content)
+		try {
+			sendMessage(BigInt(channel.id), content)
+		} catch(e){
+			console.log('/// Error ///', new Date())
+			console.log(e.message)
+		}
 	}
 }
 
 function reactionAdd(
-	payload: MessageReactionUncachedPayload,
-	emoji: ReactionPayload,
-	userID: string,
-	message?: Message | undefined)
+	data: MessageReactionAdd,
+	message?: DiscordenoMessage | undefined)
 {
-	if (message?.author.id != botID)
+	if (message?.authorId != botId)
 		return
 
 	// Get channel and topic
-	const topic = topics.find(x => x.channels.find(y => y.id == message.channelID))
+	const topic = topics.find(x => x.channels.find(y => y.id == message.channelId.toString()))
 	if (!topic)
 		return
-	const channel = topic.channels.find(y => y.id == message.channelID)!
+	const channel = topic.channels.find(y => y.id == message.channelId.toString())!
 		
 	// Test if correct emoji
-	const charPoint = emoji.name?.codePointAt(0) || 0
+	const charPoint = data.emoji.name?.codePointAt(0) || 0
 	const ref = channel.deleteReactCharCodes || config.deleteReactCharCodes
-	Deno.writeTextFileSync('test.json', (emoji.name?.codePointAt(0)?.toString() || ''));
 	if (!ref.includes(charPoint))
 		return
 	
 	// timeout to avoid "ghost message" when deleted to quickly after being sent
 	setTimeout(()=>{
-		deleteMessage(message)
+		deleteMessage(message.channelId, message.id)
 	}, 500)
 }
-
-/*
-if (msg.referencedMessageID?.author.id === botID){
-	if (msg.content.match(config.replaceWord)){
-		await deleteMessageByID(msg.channelID, msg.referencedMessageID?.id)
-		
-	}
-	return
-}
-*/

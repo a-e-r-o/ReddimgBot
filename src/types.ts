@@ -1,7 +1,7 @@
 export type RedditRes = {
 	kind: string
 	data: {
-		modmash: string
+		modhash: string
 		dist: number
 		children: RedditPost[]
 	}
@@ -16,7 +16,15 @@ export type RedditPost = {
 		id: string
 		is_gallery: boolean
 		media_metadata: Record<string, {m: string, id: string}>
+		media: {
+			reddit_video: {
+				fallbacl_url: string
+			}
+		}
 	}
+
+	// reference JSON use media > reddit_video > fallback_url
+	//https://www.reddit.com/r/space/comments/6u34g5/a_look_at_eclipses_through_history_and_why_people/.json
 }
 
 export type Config = {
