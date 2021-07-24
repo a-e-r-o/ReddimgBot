@@ -6,6 +6,11 @@ const config: Config = YAML.parse(Deno.readTextFileSync(Deno.realPathSync('./con
 const token: string = config.token
 const topics: TopicConfig[] = config.topics
 
+window.addEventListener("unhandledrejection", event => {
+	event.preventDefault()
+  console.log(`${event}`)
+})
+
 if(!checkConfig(config))
 	throw '/!\\ config.yml incorrect or missing'
 
