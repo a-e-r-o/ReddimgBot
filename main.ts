@@ -1,5 +1,5 @@
-import {startBot, Intents, sendMessage, DiscordenoMessage, deleteMessage, YAML, botId, MessageReactionAdd} from './src/deps.ts'
-import {Config, checkConfig, TopicConfig, ChannelConfig} from './src/types.ts'
+import {startBot, Intents, sendMessage, DiscordenoMessage, YAML, botId, editBotStatus, DiscordActivityTypes} from './src/deps.ts'
+import {Config, checkConfig, TopicConfig, msToTime} from './src/types.ts'
 import {PostsManager} from './src/postsManager.ts'
 
 const config: Config = YAML.parse(Deno.readTextFileSync(Deno.realPathSync('./config.yml'))) as Config
@@ -18,9 +18,8 @@ startBot({
 	token: token,
 	intents: [Intents.Guilds, Intents.GuildMessages, Intents.GuildMessageReactions],
 	eventHandlers: {
-		ready: ready,
-		messageCreate: msgCreate,
-		reactionAdd: reactionAdd
+		ready: init,
+		messageCreate: msgCreate
 	}
 })
 
@@ -31,12 +30,25 @@ const intervals = {
 const manager: PostsManager = new PostsManager()
 
 // Ready
-function ready() {
-	console.log('\n=== Bot operationnal ===\n')
-	init()
-}
-
 function init(){
+	console.log('\n=== Bot operationnal ===\n')
+
+	const startTime = new Date();
+	setInterval(()=>{
+		editBotStatus(
+			{
+				status: 'online', 
+				activities: [
+					{
+						createdAt: (new Date()).getTime(),
+						type: DiscordActivityTypes.Game,
+						name: `Uptime ${msToTime((startTime.getTime() - new Date().getTime()))}`
+					}
+				]
+			}
+		)
+	}, 120000)
+
 	// For each topic
 	topics.forEach(async topic => {
 
@@ -119,29 +131,4 @@ function msgCreate(msg: DiscordenoMessage){
 			console.log(e.message)
 		}
 	}
-}
-
-function reactionAdd(
-	data: MessageReactionAdd,
-	message?: DiscordenoMessage | undefined)
-{
-	if (message?.authorId != botId)
-		return
-
-	// Get channel and topic
-	const topic = topics.find(x => x.channels.find(y => y.id == message.channelId.toString()))
-	if (!topic)
-		return
-	const channel = topic.channels.find(y => y.id == message.channelId.toString())!
-		
-	// Test if correct emoji
-	const charPoint = data.emoji.name?.codePointAt(0) || 0
-	const ref = channel.deleteReactCharCodes || config.deleteReactCharCodes
-	if (!ref.includes(charPoint))
-		return
-	
-	// timeout to avoid "ghost message" when deleted to quickly after being sent
-	setTimeout(()=>{
-		deleteMessage(message.channelId, message.id)
-	}, 500)
 }
