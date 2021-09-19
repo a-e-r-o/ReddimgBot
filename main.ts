@@ -42,7 +42,7 @@ function init(){
 					{
 						createdAt: (new Date()).getTime(),
 						type: DiscordActivityTypes.Game,
-						name: `Uptime ${msToTime((startTime.getTime() - new Date().getTime()))}`
+						name: `Uptime ${msToTime((new Date().getTime() - startTime.getTime()))}`
 					}
 				]
 			}
