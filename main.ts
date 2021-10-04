@@ -78,12 +78,16 @@ function init(){
 			intervals.message.set	(
 				channel.id,
 				setInterval(()=>{
-					const content = manager.getContent(
-						channel.id,
-						topic.subreddit,
-						channel.histSize ?? config.histSize
-					)
-					sendMessage(BigInt(channel.id), content)
+					try {
+						const content = manager.getContent (
+							channel.id,
+							topic.subreddit,
+							channel.histSize ?? config.histSize
+						)
+						sendMessage(BigInt(channel.id), content)
+					} catch (_){
+						console.log(`/// Error occured sending message to channel ${channel.id}`)
+					}
 				}, (channel.sendInterval ?? config.sendInterval)*60000)
 			)
 		})
