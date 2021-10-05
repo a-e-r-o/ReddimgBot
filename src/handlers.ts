@@ -54,7 +54,12 @@ export function ready(ctx: Context){
 						topic.subreddit,
 						channel.histSize ?? ctx.config.histSize
 					)
-					sendMessage(channel.id, content)
+					try {
+						sendMessage(channel.id, content)
+					} catch(e){
+						console.log('/// Error sending message ///', new Date())
+						console.log(e.message)
+					}
 				}, (channel.sendInterval ?? ctx.config.sendInterval)*60000)
 			)
 		})
@@ -98,7 +103,7 @@ export function msgCreate(msg: DiscordenoMessage, ctx: Context){
 		try {
 			sendMessage(channel.id, content)
 		} catch(e){
-			console.log('/// Error ///', new Date())
+			console.log('/// Error sending message ///', new Date())
 			console.log(e.message)
 		}
 	}

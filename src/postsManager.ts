@@ -54,11 +54,16 @@ export class PostsManager {
 			this.cache.set(topic.subreddit, posts)
 		} catch (e) {
 			// Error
-			console.log('/// Error ///', new Date())
+			console.log('/// Error fetching data ///', new Date())
 			console.log(e.message)
 			
-			for (const channel of topic.channels){
-				sendMessage(channel.id, `\`\`\`fix\nAn error occured while fetching content from Reddit for Subreddit : "${topic.subreddit}". Retrying in ${fetchInterval} minutes\`\`\``)
+			try {
+				for (const channel of topic.channels){
+					sendMessage(channel.id, `\`\`\`fix\nAn error occured while fetching content from Reddit for Subreddit : "${topic.subreddit}". Retrying in ${fetchInterval} minutes\`\`\``)
+				}
+			} catch(_) {
+				console.log('/// Error sending message ///', new Date())
+				console.log(e.message)
 			}
 		}
 	}
