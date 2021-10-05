@@ -26,7 +26,7 @@ export type RedditPost = {
 		}
 	}
 
-	
+
 
 	// reference JSON use media > reddit_video > fallback_url
 	//https://www.reddit.com/r/space/comments/6u34g5/a_look_at_eclipses_through_history_and_why_people/.json
@@ -87,4 +87,14 @@ export type Context = {
 	config: Config
 	intervals: {message: Map<bigint, number>, cache: Map<string, number>}
 	manager: PostsManager
+}
+
+export function msToTime(ms: number) {
+	const d = Math.floor(ms/86400000)
+	ms -= d*86400000
+	const h = Math.floor(ms/3600000)
+	ms -= h*3600000
+	const m = Math.floor(ms/60000)
+	
+	return `${d<1?'':(d<10?'0'+d:d)+'d:'}${h<1?'':(h<10?'0'+h:h)+'h:'}${m<1?'':(m<10?'0'+m:m)+'m'}`
 }

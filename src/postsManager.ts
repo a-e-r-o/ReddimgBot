@@ -18,13 +18,16 @@ export class PostsManager {
 	public getContent(channelID: bigint, subreddit: string, histSize:number): string {
 		let selectedPost: RedditPost | undefined
 		const hist = this.record.get(channelID) || []
-		
-		// Get a post that is not already in history
-		for (const post of this.cache.get(subreddit)!) {
-			if (!hist.includes(post.data.id)){
-				selectedPost = post
-				hist.push(post.data.id)
-				break
+
+		// If there is at least one post cached for this subreddit
+		if ((this.cache.get(subreddit)?.length ?? 0) > 0) {
+			// Get a post that is not already in history
+			for (const post of this.cache.get(subreddit)!) {
+				if (!hist.includes(post.data.id)){
+					selectedPost = post
+					hist.push(post.data.id)
+					break
+				}
 			}
 		}
 	

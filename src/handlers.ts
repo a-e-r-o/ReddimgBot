@@ -1,8 +1,24 @@
-import { botId, DiscordenoMessage, sendMessage } from "./deps.ts";
-import { Context } from "./types.ts";
+import { botId, DiscordActivityTypes, DiscordenoMessage, editBotStatus, sendMessage } from "./deps.ts";
+import { Context, msToTime } from "./types.ts";
 
 export function ready(ctx: Context){
 	console.log('\n=== Bot operationnal ===\n')
+
+	const startTime = new Date();
+	setInterval(()=>{
+		editBotStatus(
+			{
+				status: 'online', 
+				activities: [
+					{
+						createdAt: (new Date()).getTime(),
+						type: DiscordActivityTypes.Game,
+						name: `Uptime ${msToTime((new Date().getTime() - startTime.getTime()))}`
+					}
+				]
+			}
+		)
+	}, 120000)
 
 	// For each topic
 	ctx.config.topics.forEach(async topic => {
