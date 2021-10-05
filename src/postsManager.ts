@@ -1,11 +1,11 @@
 import {RedditPost, RedditRes, TopicConfig} from './types.ts'
-import {writeHist, readFullHist} from './hist.ts'
+import {writeHist, readFullHist} from './historyManager.ts'
 import {sendMessage} from './deps.ts'
 
 export class PostsManager {
 
 	// Record = all channel histories
-	public record: Map<string, string[]>
+	public record: Map<bigint, string[]>
 	// Cache = reddit posts already fecthed, mapped by subreddit
 	public cache: Map<string, RedditPost[]>
 
@@ -15,7 +15,7 @@ export class PostsManager {
 	}
 
 
-	public getContent(channelID: string, subreddit: string, histSize:number): string {
+	public getContent(channelID: bigint, subreddit: string, histSize:number): string {
 		let selectedPost: RedditPost | undefined
 		const hist = this.record.get(channelID) || []
 		
@@ -55,7 +55,7 @@ export class PostsManager {
 			console.log(e.message)
 			
 			for (const channel of topic.channels){
-				sendMessage(BigInt(channel.id), `\`\`\`fix\nAn error occured while fetching content from Reddit for Subreddit : "${topic.subreddit}". Retrying in ${fetchInterval} minutes\`\`\``)
+				sendMessage(channel.id, `\`\`\`fix\nAn error occured while fetching content from Reddit for Subreddit : "${topic.subreddit}". Retrying in ${fetchInterval} minutes\`\`\``)
 			}
 		}
 	}

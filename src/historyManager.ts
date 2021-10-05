@@ -3,19 +3,24 @@ import {existsSync} from './deps.ts'
 
 const histDir = './hist'
 
-export function readFullHist(): Map<string, string[]> {
+export function readFullHist(): Map<bigint, string[]> {
 	if (!existsSync(histDir))
 		Deno.mkdirSync(histDir)
 	const objHists = readPath(histDir) as Hist[]
+	// JSON serialization doesn't handle big int, we had to convert when writing, so now we convert it back
+	objHists.forEach(obj => obj.id = BigInt(obj.id))
 	return new Map(objHists.map(i => [i.id, i.posts]))
 }
 
-export function writeHist(id: string, posts: string[]) {
-	const histObj: Hist = {
-		id: id,
-		posts: posts
-	}
-	Deno.writeTextFileSync(Deno.realPathSync(histDir)+'/'+id, JSON.stringify(histObj))
+export function writeHist(id: bigint, posts: string[]) {
+	Deno.writeTextFileSync(
+		Deno.realPathSync(histDir)+'/'+id.toString(), 
+		// JSON serialization doesn't handle big int, we have to convert it
+		JSON.stringify({
+			id: id.toString(),
+			posts: posts
+		})
+	)
 }
 
 function readPath(path: string): Record<string, unknown>[] {

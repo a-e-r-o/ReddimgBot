@@ -1,3 +1,6 @@
+import { YAML } from "./deps.ts";
+import { PostsManager } from "./postsManager.ts";
+
 export type RedditRes = {
 	kind: string
 	data: {
@@ -18,10 +21,12 @@ export type RedditPost = {
 		media_metadata: Record<string, {m: string, id: string}>
 		media: {
 			reddit_video: {
-				fallbacl_url: string
+				fallback_url: string
 			}
 		}
 	}
+
+	
 
 	// reference JSON use media > reddit_video > fallback_url
 	//https://www.reddit.com/r/space/comments/6u34g5/a_look_at_eclipses_through_history_and_why_people/.json
@@ -44,13 +49,23 @@ export function checkConfig(value: Config): boolean {
 		typeof value.fetchInterval == 'number' &&
 		typeof value.fetchSize == 'number' &&
 		typeof value.histSize == 'number' &&
-		value.deleteReactCharCodes.length > 0 &&
 		value.topics != undefined
 	)
 }
 
+export function parseConfig(path: string): Config {
+	const config = YAML.parse(Deno.readTextFileSync(path)) as Config
+	// YAML doesn't support Bigint, so we have to convert heach channel ID from string to bigInt
+	config.topics.forEach(topic => {
+		topic.channels.forEach(channel => {
+			channel.id = BigInt(channel.id);
+		})
+	})
+	return config
+}
+
 export type Hist = {
-	id: string
+	id: bigint
 	posts: string[]
 }
 
@@ -62,8 +77,14 @@ export type TopicConfig = {
 }
 
 export type ChannelConfig = {
-	id: string
+	id: bigint
 	sendInterval?: number
 	histSize?: number
 	deleteReactCharCodes?: number[]
+}
+
+export type Context = {
+	config: Config
+	intervals: {message: Map<bigint, number>, cache: Map<string, number>}
+	manager: PostsManager
 }
