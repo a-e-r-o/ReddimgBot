@@ -82,29 +82,22 @@ export function msgCreate(msg: DiscordenoMessage, ctx: Context){
 	// Message content (after removing mentions) contains a number
 	let count = 1
 	const clearedMsg = msg.content.replace(/<.+>/mg, '').trim()
-	const arg = parseInt(clearedMsg)
-	if (!isNaN(arg)) {
-		if (arg > 0)
-			count = arg
-		
-		if (arg > 10)
-			count = 10
-	}
 
-	if (clearedMsg != '' && isNaN(arg))
+	// If cleared message is not empty, do nothing
+	if (clearedMsg != '')
 		return
 
-	for (let i = 0; i < count; i++) {
-		const content = ctx.manager.getContent(
-			msg.channelId,
-			topic.subreddit,
-			channel.histSize ?? ctx.config.histSize
-		)
-		try {
+	try {
+		for (let i = 0; i < count; i++) {
+			const content = ctx.manager.getContent(
+				msg.channelId,
+				topic.subreddit,
+				channel.histSize ?? ctx.config.histSize
+			)
 			sendMessage(channel.id, content)
-		} catch(e){
-			console.log('/// Error sending message ///', new Date())
-			console.log(e.message)
 		}
+	} catch(e){
+		console.log('/// Error sending message ///', new Date())
+		console.log(e.message)
 	}
 }
