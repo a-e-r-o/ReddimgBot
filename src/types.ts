@@ -24,6 +24,7 @@ export type RedditPost = {
 				fallback_url: string
 			}
 		}
+		post_hint: string
 	}
 
 

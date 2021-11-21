@@ -42,8 +42,14 @@ export class PostsManager {
 	
 		if (!selectedPost)
 			return '\`\`\`fix\nCannot find any new images\`\`\`'
+
+		if (selectedPost.data.is_gallery)
+			return this.formatGalleryMsg(selectedPost)
+
+		if (selectedPost.data.post_hint	== "hosted:video")
+			return 'https://reddit.com/' + selectedPost.data.permalink
 	
-		return selectedPost.data.is_gallery ? this.formatGalleryMsg(selectedPost) : selectedPost.data.url
+		return selectedPost.data.url
 	}
 
 	public async updateCache(topic: TopicConfig, fetchAmount: number, fetchInterval: number): Promise<void> {
