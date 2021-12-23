@@ -32,7 +32,7 @@ token: '{paste your bot secret token here}'
 sendInterval: 10  # Default interval (in minutes) at which the bot will send content on Discord
 fetchInterval: 60 # Default interval (in minutes) at which the bot will update its content cache with new Reddit posts
 fetchSize: 50  # Default number of reddit posts fetched each time
-histSize: 100 # Default Number of posts IDs that will be kept in memory (and in a json file) to avoid duplicate posts
+histSize: 200 # Default Number of posts IDs that will be kept in memory (and in a json file) to avoid duplicate posts
 topics:
   - subreddit: 'pixelart' # The subreddit on which the bot will go to get content
     channels: # List of channels the content of this subreddit will be sent to
