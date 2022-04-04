@@ -4,9 +4,9 @@
 
 *This bot is intended to be used to post images and videos, it doesn't support text posts yet.*
 
-This bot fetches posts from defined subreddits using the Reddit api. They are fetch sorted by top without pagination, so to avoid repetitions, a bunch of new posts are fetch regularly.
+What it does is : it fetches posts from defined subreddits using the Reddit APi and send messages with the links of the posts in a Discord channel. Posts are fetched without pagination and sorted by "hot", so to avoid repetitions a bunch of new posts are fetch regularly.
 
-There is also a history system for each channel, such that no image is posted twice in the same channel.
+There is also a post history mechanism which registers the few last posts sent in each channel, so that no image is posted twice in the same channel.
 
 -----
 
@@ -39,7 +39,7 @@ topics:
       - id: '000000000000000002' # Channel ID
 ```
 
-This is an exemple of a more advanced confugiration, with 2 different topics (subreddits). Each one has channels associated to him, along some custom parameters.
+This is an exemple of a more advanced configuration, with 2 different topics (subreddits). Each one has channels associated to it, along with some custom parameters.
 ```yaml
 token: '{paste your bot secret token here}'
 sendInterval: 30  # Default interval (in minutes) at which the bot will send content on Discord
