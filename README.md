@@ -6,7 +6,7 @@
 
 What it does is : it fetches posts from defined subreddits using the Reddit APi and send messages with the links of the posts in a Discord channel. Posts are fetched without pagination and sorted by "hot", so to avoid repetitions a bunch of new posts are fetch regularly.
 
-There is also a post history mechanism which registers the few last posts sent in each channel, so that no image is posted twice in the same channel.
+There is also a post history mechanism which registers the last few posts sent in each channel, so that no image is posted twice in the same channel.
 
 -----
 
@@ -63,18 +63,15 @@ topics:
 
 -----
 
-## Running the bot
-
-Once your `config.yml` is complete, run the bot with this command :
+**Starting the bot :** <br>
+Once you have cloned the repo and made sure you have installed Deno
 ```bash
-deno run --allow-net --allow-read --allow-write --unstable main.ts
+deno run --allow-net --allow-read --unstable main.ts
 ```
-or, if you are on linux, you can also use : 
+The repo also contains a bash script simply called `launch` which simply runs the bot and restarts it if it crashes for whatever reasons. <br>
+To use this script, make it executable and execute it in a bash shell. <br>
 ```bash
 chmod +x launch.sh
-``` 
-and then
-```bash
 ./launch.sh
 ```
-*This script launches the bot and restarts it if it crashes for whatever reason.*
+*I recommend using [tmux](https://www.redhat.com/sysadmin/introduction-tmux-linux) to keep the bot running in the background wihtout needing to keep your shell opened*
