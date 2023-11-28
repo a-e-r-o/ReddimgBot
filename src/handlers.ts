@@ -94,6 +94,8 @@ export function msgCreate(msg: DiscordenoMessage, ctx: Context){
 				topic.subreddit,
 				channel.histSize ?? ctx.config.histSize
 			)
+			if (!content)
+				return
 			sendMessage(channel.id, content)
 		}
 	} catch(e){

@@ -40,8 +40,10 @@ export class PostsManager {
 		this.record.set(channelID, hist)
 		writeHist(channelID, hist)
 	
-		if (!selectedPost)
-			return '\`\`\`fix\nCannot find any new images\`\`\`'
+		if (!selectedPost){
+			console.log(`No new image found. Subreddit:${subreddit};Channel:${channelID}`)
+			return ''
+		}
 
 		if (selectedPost.data.is_gallery)
 			return this.formatGalleryMsg(selectedPost)
