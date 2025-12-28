@@ -1,8 +1,10 @@
 # ReddimgBot
 
-*This bot is intended to be used to post images and videos, it doesn't support text posts*
+This project is a very strightforward Discord BOT using an older version of [Discordeno](https://github.com/discordeno/discordeno)
 
-This bot fetches posts from subreddits using the Reddit APi and sends each posts link in a Discord channel. Posts are fetched without pagination and sorted by "hot". To avoid reposts, 50¹ new posts are fetch every 60¹ minutes and a post history mechanism ensures no post is sent twice in the same channel by registering the IDs of the last 100¹ posts sent in each channel.
+The program periodically fetches posts from subreddits using the Reddit APi and sends each posts link in a Discord channel. Posts are fetched without pagination and sorted by "hot". To avoid reposts, 50¹ new posts are fetch every 60¹ minutes and a post history mechanism ensures no post is sent twice in the same channel by registering the IDs of the last 100¹ posts sent in each channel.
+
+This bot is intended to be used to post images (including galleries) and videos, it doesn't support text posts.
 
 *1. Values presented above are examples, and configurable*
 
