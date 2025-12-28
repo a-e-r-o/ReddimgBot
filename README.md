@@ -1,23 +1,25 @@
-# N.E.O.N. Bot
+# ReddimgBot
 
-### A bot to get all the good content from Reddit, without having to go on Reddit
+*This bot is intended to be used to post images and videos, it doesn't support text posts*
 
-*This bot is intended to be used to post images and videos, it doesn't support text posts yet.*
+This bot fetches posts from subreddits using the Reddit APi and sends each posts link in a Discord channel. Posts are fetched without pagination and sorted by "hot". To avoid reposts, 50¹ new posts are fetch every 60¹ minutes and a post history mechanism ensures no post is sent twice in the same channel by registering the IDs of the last 100¹ posts sent in each channel.
 
-What it does is : it fetches posts from defined subreddits using the Reddit APi and send messages with the links of the posts in a Discord channel. Posts are fetched without pagination and sorted by "hot", so to avoid repetitions a bunch of new posts are fetch regularly.
-
-There is also a post history mechanism which registers the last few posts sent in each channel, so that no image is posted twice in the same channel.
+*1. Values presented above are examples, and configurable*
 
 -----
 
+## Requirements
+
+1. [Deno.land runtime](https://deno.land/#installation)
+
 ## Setup
 
-- Install Deno on your environment [(official instructions here)](https://deno.land/#installation)
-- Clone this repo with the following command
-```bash
-git clone https://gitlab.com/AeroCloud/neonbot.git
-```
-- Create a `config.yml` file at the root of the project (see section below for exmeples)
+- Clone this repo
+- Create a `config.yml` file at the root of the project
+- File the config file following the exemples below
+- Executing main.ts
+  - `deno run --allow-net --allow-read --unstable main.ts`
+  - Alternatively : at the root of the repo is bash script named `launch` which runs the bot and restarts it in case of crash
 
 -----
 
@@ -39,7 +41,7 @@ topics:
       - id: '000000000000000002' # Channel ID
 ```
 
-This is an exemple of a more advanced configuration, with 2 different topics (subreddits). Each one has channels associated to it, along with some custom parameters.
+This is an exemple of a more advanced configuration, with 2 different topics (subreddits). Each one has channels associated to it, with override parameters.
 ```yaml
 token: '{paste your bot secret token here}'
 sendInterval: 30  # Default interval (in minutes) at which the bot will send content on Discord
@@ -61,17 +63,7 @@ topics:
     - id: '000000000000000003' # Channel ID
 ```
 
------
+---
 
-**Starting the bot :** <br>
-Once you have cloned the repo and made sure you have installed Deno
-```bash
-deno run --allow-net --allow-read --unstable main.ts
-```
-The repo also contains a bash script simply called `launch` which simply runs the bot and restarts it if it crashes for whatever reasons. <br>
-To use this script, make it executable and execute it in a bash shell. <br>
-```bash
-chmod +x launch.sh
-./launch.sh
-```
-*I recommend using [tmux](https://www.redhat.com/sysadmin/introduction-tmux-linux) to keep the bot running in the background wihtout needing to keep your shell opened*
+
+
